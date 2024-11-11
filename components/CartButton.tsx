@@ -69,7 +69,7 @@ const CartButton = ({
             />
           </button>
 
-          <p className="text-white text-sm">{count}</p>
+          <p className="text-white text-sm lg:text-base">{count}</p>
 
           <button
             className="w-3 h-3 border-[1.5px] rounded-full"
@@ -85,7 +85,7 @@ const CartButton = ({
         </div>
       ) : (
         <button
-          className="flex w-full h-full items-center justify-center gap-2"
+          className="flex w-full h-full items-center justify-center gap-2 lg:hover:outline-theme_red"
           onClick={handleClicked}
         >
           <Image
@@ -94,7 +94,9 @@ const CartButton = ({
             width={20}
             height={20}
           />
-          <p className="text-sm font-medium">Add to Cart</p>
+          <p className="text-sm font-medium lg:text-lg lg:hover:text-theme_red">
+            Add to Cart
+          </p>
         </button>
       )}
     </div>

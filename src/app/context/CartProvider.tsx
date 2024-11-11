@@ -30,7 +30,7 @@ type CartContextType = {
   ) => void;
   removeItemFromCart: (itemName: string) => void;
   deleteItem: (itemName: string) => void;
-  ourTotal: number;
+  orderTotal: number;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -92,7 +92,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const ourTotal = cartItems.reduce((acc, item) => {
+  const orderTotal = cartItems.reduce((acc, item) => {
     return acc + item.price * item.quantity;
   }, 0);
 
@@ -106,7 +106,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addItemToCart,
         removeItemFromCart,
         deleteItem,
-        ourTotal,
+        orderTotal,
       }}
     >
       {children}

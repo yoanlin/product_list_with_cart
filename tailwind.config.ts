@@ -15,7 +15,15 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        theme_red: "#bd0b0b",
+        theme_red: "#c73a0f",
+        rose: {
+          50: "#fcf9f7",
+          100: "#f4edeb",
+          300: "#c9aea6",
+          400: "#ad8985",
+          500: "#87635a",
+          900: "#260f08",
+        },
       },
     },
   },

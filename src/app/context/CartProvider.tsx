@@ -1,115 +1,115 @@
 "use client";
+
 import {
   createContext,
-  useState,
-  useContext,
-  ReactNode,
-  useCallback,
-  SetStateAction,
   Dispatch,
+  ReactNode,
+  SetStateAction,
+  useContext,
+  useReducer,
+  useState,
 } from "react";
+import { CartItem, Product } from "../../../types/types";
 
-export type CartItem = {
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  icon: string;
-};
+type CartAction =
+  | { type: "addItemToCart"; payload: Product }
+  | { type: "increaseItemQuantity"; payload: number }
+  | { type: "reduceItemQuantity"; payload: number }
+  | { type: "removeItemFromCart"; payload: number }
+  | { type: "resetCart" };
 
 type CartContextType = {
   cartItems: CartItem[];
-  setCartItems: Dispatch<SetStateAction<CartItem[]>>;
   isConfirmed: boolean;
-  setConfirmed: Dispatch<SetStateAction<boolean>>;
-  addItemToCart: (
-    itemName: string,
-    price: number,
-    image: string,
-    icon: string
-  ) => void;
-  removeItemFromCart: (itemName: string) => void;
-  deleteItem: (itemName: string) => void;
   orderTotal: number;
 };
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+const CartContext = createContext<CartContextType | null>(null);
 
-export const useCart = () => {
+export function useCart() {
   const context = useContext(CartContext);
 
-  if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
+  if (!context) throw new Error("useCart must be used within a CartProvider");
+
   return context;
+}
+
+type CartDispatchContextType = {
+  dispatch: Dispatch<CartAction>;
+  setConfirmed: Dispatch<SetStateAction<boolean>>;
 };
 
+const CartDispatchContext = createContext<CartDispatchContextType | null>(null);
+
+export function useCartDispatch() {
+  const context = useContext(CartDispatchContext);
+
+  if (!context)
+    throw new Error("useCartDispatch must be used within a CartProvider");
+
+  return context;
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, dispatch] = useReducer(cartReducer, initialCartItems);
   const [isConfirmed, setConfirmed] = useState(false);
-
-  const addItemToCart = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (itemName: string, price: number, image: string, icon: string) => {
-      setCartItems((prevItems) => {
-        console.log("Item added:", itemName);
-        const updatedCart = [...prevItems];
-        const itemIndex = prevItems.findIndex((item) => item.name === itemName);
-
-        if (itemIndex >= 0) {
-          updatedCart[itemIndex].quantity += 1;
-        } else {
-          updatedCart.push({
-            name: itemName,
-            price,
-            quantity: 1,
-            image: image,
-            icon: icon,
-          });
-        }
-
-        return updatedCart;
-      });
-    },
-    []
+  const orderTotal = cartItems.reduce(
+    (acc, item) => acc + item.product.price * item.quantity,
+    0
   );
+  return (
+    <CartContext.Provider value={{ cartItems, isConfirmed, orderTotal }}>
+      <CartDispatchContext.Provider value={{ dispatch, setConfirmed }}>
+        {children}
+      </CartDispatchContext.Provider>
+    </CartContext.Provider>
+  );
+}
 
-  const removeItemFromCart = useCallback((itemName: string) => {
-    setCartItems((prevItems) => {
-      return prevItems
+function cartReducer(cartItems: CartItem[], action: CartAction) {
+  switch (action.type) {
+    case "addItemToCart": {
+      const existingItem = cartItems.find(
+        (item) => item.product.id === action.payload.id
+      );
+
+      if (existingItem) {
+        return cartItems;
+      } else {
+        return [...cartItems, { product: action.payload, quantity: 1 }];
+      }
+    }
+
+    case "increaseItemQuantity": {
+      return cartItems.map((item) =>
+        item.product.id === action.payload
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+    }
+
+    case "reduceItemQuantity": {
+      return cartItems
         .map((item) =>
-          item.name === itemName
+          item.product.id === action.payload
             ? { ...item, quantity: item.quantity - 1 }
             : item
         )
         .filter((item) => item.quantity > 0);
-    });
-  }, []);
+    }
 
-  const deleteItem = useCallback((itemName: string) => {
-    setCartItems((prevItems) => {
-      return prevItems.filter((item) => item.name !== itemName);
-    });
-  }, []);
+    case "removeItemFromCart": {
+      return cartItems.filter((item) => item.product.id !== action.payload);
+    }
 
-  const orderTotal = cartItems.reduce((acc, item) => {
-    return acc + item.price * item.quantity;
-  }, 0);
+    case "resetCart": {
+      return [];
+    }
 
-  return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        setCartItems,
-        isConfirmed,
-        setConfirmed,
-        addItemToCart,
-        removeItemFromCart,
-        deleteItem,
-        orderTotal,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
+    default: {
+      throw new Error("Unknown action type");
+    }
+  }
 }
+
+const initialCartItems: CartItem[] = [];

@@ -1,51 +1,47 @@
 "use client";
-import { useCart } from "@/app/context/CartProvider";
+import { useCart, useCartDispatch } from "@/app/context/CartProvider";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { Product } from "../types/types";
 
-const CartButton = ({
-  value,
-  onChange,
-  itemName,
-  itemPrice,
-  itemImage,
-  itemIcon,
-}: {
-  value: number;
-  onChange: (quantity: number) => void;
-  itemName: string;
-  itemPrice: number;
-  itemImage: string;
-  itemIcon: string;
-}) => {
-  const [count, setCount] = useState(value);
-  const { addItemToCart, removeItemFromCart } = useCart();
+const CartButton = ({ data }: { data: Product }) => {
+  const { cartItems } = useCart();
+  const { dispatch } = useCartDispatch();
+  const existingItem = cartItems.find(
+    (cartItem) => cartItem.product.id === data.id
+  );
+  let count: number;
 
-  useEffect(() => {
-    setCount(value);
-  }, [value]);
+  if (existingItem) {
+    count = existingItem.quantity;
+  } else {
+    count = 0;
+  }
 
   const handleDecrease = () => {
     if (count > 0) {
-      const newCount = count - 1;
-      setCount(newCount);
-      onChange(newCount);
-      removeItemFromCart(itemName);
+      dispatch({
+        type: "reduceItemQuantity",
+        payload: data.id,
+      });
     }
   };
 
   const handleIncrease = () => {
-    const newCount = count + 1;
-    setCount(newCount);
-    onChange(newCount);
-    addItemToCart(itemName, itemPrice, itemImage, itemIcon);
+    dispatch({
+      type: "increaseItemQuantity",
+      payload: data.id,
+    });
   };
 
   const handleClicked = () => {
-    const newCount = count + 1;
-    setCount(newCount);
-    onChange(newCount);
-    addItemToCart(itemName, itemPrice, itemImage, itemIcon);
+    if (!data) {
+      console.error("Error: Item is undefined");
+      return;
+    }
+    dispatch({
+      type: "addItemToCart",
+      payload: data,
+    });
   };
 
   return (
@@ -94,7 +90,7 @@ const CartButton = ({
             width={20}
             height={20}
           />
-          <p className="text-sm font-medium lg:text-lg lg:hover:text-theme_red">
+          <p className="text-sm font-medium lg:text-base lg:hover:text-theme_red">
             Add to Cart
           </p>
         </button>
